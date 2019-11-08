@@ -246,6 +246,21 @@ parser.add_argument(
     dest='showPlot',
     action='store_false',
     help='no plot is shown during execution')
+
+# HS args to visualize preds
+parser.add_argument(
+    '--imagespath',
+    dest='imagesPath',
+    default=None,
+    metavar='',
+    help='path to raw images')
+parser.add_argument(
+    '--vispath',
+    dest='visPath',
+    default=None,
+    metavar='',
+    help='path to store visualizations')
+
 args = parser.parse_args()
 
 iouThreshold = args.iouThreshold
@@ -346,6 +361,7 @@ for metricsPerClass in detections:
     totalPositives = metricsPerClass['total positives']
     total_TP = metricsPerClass['total TP']
     total_FP = metricsPerClass['total FP']
+    hs_FN = metricsPerClass['hs FN']
 
     if totalPositives > 0:
         validClasses = validClasses + 1
@@ -359,8 +375,47 @@ for metricsPerClass in detections:
         f.write('\nAP: %s' % ap_str)
         f.write('\nPrecision: %s' % prec)
         f.write('\nRecall: %s' % rec)
+        f.write('\ntotal_TP: %s' % total_TP)
+        f.write('\ntotal_FP: %s' % total_FP)
+        f.write('\nFN(missed GT): %s' % hs_FN)
+        f.write('\ntotal GT: %s' % totalPositives)
 
 mAP = acc_AP / validClasses
 mAP_str = "{0:.2f}%".format(mAP * 100)
 print('mAP: %s' % mAP_str)
+print('FP: %s' % total_TP)
+print('TP: %s' % total_FP)
+print('FN: %s' % hs_FN)
+print('total: %s' % totalPositives)
 f.write('\n\n\nmAP: %s' % mAP_str)
+
+
+
+# HS visualizing preds
+def visualizePredLine(labelList, img):
+    xcent = float(labelList[2]) * img.shape[1]
+    ycent = float(labelList[3]) * img.shape[0]
+    w = float(labelList[4]) * img.shape[1]
+    h = float(labelList[5]) * img.shape[0]
+    
+    xmin = int(xcent - w/2)
+    ymin = int(ycent - h/2)
+    xmax = int(xcent + w/2)
+    ymax = int(ycent + h/2)
+    cv2.rectangle(img,(xmin, ymin),(xmax, ymax),(255,0,0),1)
+
+
+if(args.imagesPath and args.visPath):
+    from skimage.io import imread, imsave
+
+    for imId in os.listdir(args.imagesPath):
+        img = imread(args.imagesPath + imId)
+        
+        labelFile = open(args.detFolder + imId.replace(".jpg",".txt"), 'r')
+        labelLines = labelFile.readlines()
+        for line in labelLines:
+            visualizePredLine(line.split(" "), img)
+
+        imsave(args.visPath + imId, img)
+else:
+    print("\n*** Missed --imagespath or --vispath arguments. Predictions wont be visualized.\n")
