@@ -383,8 +383,8 @@ for metricsPerClass in detections:
 mAP = acc_AP / validClasses
 mAP_str = "{0:.2f}%".format(mAP * 100)
 print('mAP: %s' % mAP_str)
-print('FP: %s' % total_TP)
-print('TP: %s' % total_FP)
+print('FP: %s' % total_FP)
+print('TP: %s' % total_TP)
 print('FN: %s' % hs_FN)
 print('total: %s' % totalPositives)
 f.write('\n\n\nmAP: %s' % mAP_str)
