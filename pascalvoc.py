@@ -253,13 +253,13 @@ parser.add_argument(
     dest='imagesPath',
     default=None,
     metavar='',
-    help='path to raw images')
+    help='Absolute path to raw images')
 parser.add_argument(
     '--vispath',
     dest='visPath',
     default=None,
     metavar='',
-    help='path to store visualizations')
+    help='Absolute path to store visualizations')
 
 args = parser.parse_args()
 
@@ -379,38 +379,60 @@ for metricsPerClass in detections:
         f.write('\ntotal_FP: %s' % total_FP)
         f.write('\nFN(missed GT): %s' % hs_FN)
         f.write('\ntotal GT: %s' % totalPositives)
+        ### Added by Maharshi - This will print classwise statistics
+        print('True Positive: %d' %total_TP)
+        print('False Positive: %d' %total_FP)
+        print('Total Ground Truth: %d' %totalPositives)
+        print('Missed Ground Truth/False Negative: %d' %(totalPositives-total_TP))
+        ### Addition by Maharshi ends
 
 mAP = acc_AP / validClasses
 mAP_str = "{0:.2f}%".format(mAP * 100)
 print('mAP: %s' % mAP_str)
-print('FP: %s' % total_FP)
-print('TP: %s' % total_TP)
-print('FN: %s' % hs_FN)
-print('total: %s' % totalPositives)
 f.write('\n\n\nmAP: %s' % mAP_str)
+
+# mAP = acc_AP / validClasses
+# mAP_str = "{0:.2f}%".format(mAP * 100)
+# print('mAP: %s' % mAP_str)
+# print('FP: %s' % total_FP)
+# print('TP: %s' % total_TP)
+# print('FN: %s' % hs_FN)
+# print('total: %s' % totalPositives)
+# f.write('\n\n\nmAP: %s' % mAP_str)
 
 
 
 # HS visualizing preds
 def visualizePredLine(labelList, img):
+
     xcent = float(labelList[2]) * img.shape[1]
     ycent = float(labelList[3]) * img.shape[0]
     w = float(labelList[4]) * img.shape[1]
     h = float(labelList[5]) * img.shape[0]
-    
+
     xmin = int(xcent - w/2)
     ymin = int(ycent - h/2)
     xmax = int(xcent + w/2)
     ymax = int(ycent + h/2)
+
+    ### Added by Maharshi - If you have your BB predictions in xywh format with
+    ### absolute values then please uncomment the following lines.
+
+    # xmin = int(float(labelList[2]))
+    # ymin = int(float(labelList[3]))
+    # xmax = xmin + int(float(labelList[4]))
+    # ymax = ymin + int(float(labelList[5]))
+
+    ### Addition by Maharshi ends here.
+
     cv2.rectangle(img,(xmin, ymin),(xmax, ymax),(255,0,0),1)
 
 
 if(args.imagesPath and args.visPath):
     from skimage.io import imread, imsave
-
     for imId in os.listdir(args.imagesPath):
         img = imread(args.imagesPath + imId)
-        
+
         labelFile = open(args.detFolder + imId.replace(".jpg",".txt"), 'r')
         labelLines = labelFile.readlines()
         for line in labelLines:
